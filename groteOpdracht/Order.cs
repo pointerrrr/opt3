@@ -12,6 +12,6 @@ namespace groteOpdracht
         public double LedigingsDuur;
         public string Plaats;
 
-        public List<(int, int, int, LinkedListNode<int>)> Locations = new List<(int, int, int, LinkedListNode<int>)>();
+        public List<(int, int, int)> Locations = new List<(int, int, int)>();
     }
 }

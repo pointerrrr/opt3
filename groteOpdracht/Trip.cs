@@ -39,7 +39,7 @@ namespace groteOpdracht
                 res.Stops.AddLast(node.Value);
                 res.UnsortedStops.Add(UnsortedStops[i]);
 
-                OrderDict[node.Value].Locations.Add((truck,dag,trip, node));
+                OrderDict[node.Value].Locations.Add((truck,dag,trip));
                 node = node.Next;
             }
             return res;
@@ -86,12 +86,12 @@ namespace groteOpdracht
                 Duration = 1800;
             var order = OrderDict[orderId];
 
-            int previousLoc = 287;
-            int nextLoc = OrderDict[Stops[index]].MatrixId;
+            var node = UnsortedStops[index];
 
-            if (index != 0)
-                previousLoc = OrderDict[Stops[index - 1]].MatrixId;
+            int previousLoc = node.Previous != null ? OrderDict[node.Previous.Value].MatrixId : 287;
+            int nextLoc = OrderDict[node.Value].MatrixId;
 
+            
             Duration += DistanceMatrix[previousLoc, order.MatrixId];
             Duration += DistanceMatrix[order.MatrixId, nextLoc];
             Duration -= DistanceMatrix[previousLoc, nextLoc];
@@ -100,7 +100,9 @@ namespace groteOpdracht
 
             Weight += order.Volume * order.AantalContainers;
 
-            Stops.Insert(index, orderId);
+            Stops.AddBefore(node, orderId);
+
+            UnsortedStops.Add(node.Previous);
         }
 
         /// <summary>
@@ -116,8 +118,8 @@ namespace groteOpdracht
 
             var order = OrderDict[node.Value];
 
-            int previousLoc = node.Previous != null ? node.Previous.Value : 287;
-            int nextLoc = node.Next != null ? node.Next.Value : 287;
+            int previousLoc = node.Previous != null ? OrderDict[node.Previous.Value].MatrixId : 287;
+            int nextLoc = node.Next != null ? OrderDict[node.Next.Value].MatrixId : 287;
             
             Duration += DistanceMatrix[previousLoc, nextLoc];
             Duration -= DistanceMatrix[previousLoc, order.MatrixId];
@@ -127,9 +129,8 @@ namespace groteOpdracht
 
             Weight -= order.Volume * order.AantalContainers;
 
-            
 
-            Stops.RemoveAt(index);
+            Stops.Remove(node);
             // TODO: proper remove
             UnsortedStops.RemoveAt(index);
 

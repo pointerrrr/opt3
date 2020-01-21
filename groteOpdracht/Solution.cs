@@ -634,6 +634,8 @@ namespace groteOpdracht
         /// <returns>Returns the value the trip has after the two opt and a bool if the trip is valid</returns>
         private (double,bool) Check2Opt((int , int , int ) locationD, int swapIndex1, int swapIndex2)
         {
+            return (0, false);
+            /*
             // TODO: REDO
             var truck = locationD.Item1 == 0 ? Truck1 : Truck2;
             var trip = truck.Days[locationD.Item2, locationD.Item3];
@@ -674,6 +676,7 @@ namespace groteOpdracht
             valid = tempValue + othterTrip.Duration < 12 * 60 * 60;
 
             return (tempValue, valid);
+            */
         }
 
         /// <summary>
@@ -701,14 +704,17 @@ namespace groteOpdracht
             var trip2Add = addTruck.Days[locations[1].Item2, 1];
             var addTrip = addTruck.Days[locations[1].Item2, locations[1].Item3];
 
-            var node = removeTruck.Days[locations[0].Item2, locations[0].Item3].UnsortedStops[removeIndex];
+            if (addTrip.Stops.Count < 2 || removeTrip.Stops.Count < 2)
+                return (0, false);
 
-            int orderId = node.Value;
+            var prevNode = removeTruck.Days[locations[0].Item2, locations[0].Item3].UnsortedStops[removeIndex];
+
+            int orderId = prevNode.Value;
             var order = OrderDict[orderId];
 
-            int previous = node.Previous != null ? OrderDict[node.Previous.Value].MatrixId : 287;
+            int previous = prevNode.Previous != null ? OrderDict[prevNode.Previous.Value].MatrixId : 287;
             int current = order.MatrixId;
-            int next = node.Next != null ? OrderDict[node.Previous.Value].MatrixId : 287;
+            int next = prevNode.Next != null ? OrderDict[prevNode.Next.Value].MatrixId : 287;
 
             diffRem -= DistanceMatrix[previous, current];
             diffRem -= DistanceMatrix[current, next];
@@ -716,13 +722,12 @@ namespace groteOpdracht
 
             diffRem -= order.LedigingsDuur;
 
-            previous = 287;
+            var nextNode = addTrip.UnsortedStops[addIndex];
+            previous = nextNode.Previous != null ? OrderDict[nextNode.Previous.Value].MatrixId : 287;
             next = 287;
 
-            if (addIndex > 0)
-                previous = OrderDict[addTrip.Stops[addIndex - 1]].MatrixId;
             if (addIndex < addTrip.Stops.Count )
-                next = OrderDict[addTrip.Stops[addIndex]].MatrixId;
+                next = OrderDict[nextNode.Value].MatrixId;
 
             diffAdd -= DistanceMatrix[previous,next];
             diffAdd += DistanceMatrix[previous, current];
@@ -750,7 +755,7 @@ namespace groteOpdracht
         /// <param name="locations">A list of truck, day and trip where the order needs to ber removed and added</param>
         /// <param name="removeIndex">Index at which place an order needs to be remobed</param>
         /// <param name="addIndex">Index at which place an order needs to be added</param>
-        private void ShiftTrip(List<(int,int,int, LinkedListNode<int>)> locations, int removeIndex, int addIndex)
+        private void ShiftTrip(List<(int,int,int)> locations, int removeIndex, int addIndex)
         {
             var removeTruck = locations[0].Item1 == 0 ? Truck1 : Truck2;
             var addTruck = locations[1].Item1 == 0 ? Truck1 : Truck2;
@@ -764,7 +769,7 @@ namespace groteOpdracht
             order.Locations.RemoveAt(locationIndex);
 
             addTruck.Days[locations[1].Item2, locations[1].Item3].AddStop(orderId, addIndex);
-            order.Locations.Add((locations[1].Item1, locations[1].Item2, locations[1].Item3, locations[1].Item4));
+            order.Locations.Add((locations[1].Item1, locations[1].Item2, locations[1].Item3));
         }
 
         /// <summary>
@@ -775,7 +780,7 @@ namespace groteOpdracht
         {
             indexError = false;
             foreach (var location in OrderDict.Values)
-                location.Locations = new List<(int, int, int, LinkedListNode<int>)>();
+                location.Locations = new List<(int, int, int)>();
             var res = new Solution();
             res.Penalty = Penalty;
             res.Truck1 = Truck1.Copy(0);
@@ -802,18 +807,19 @@ namespace groteOpdracht
 
             foreach (var location in locations)
             {
-                int previousLoc = 287;
-                int nextLoc = 287;
-                double diff = 0;
-
                 var truck = location.Item1 == 0 ? Truck1 : Truck2;
                 var trip1 = truck.Days[location.Item2, 0];
                 var trip2 = truck.Days[location.Item2, 1];
                 var trip = location.Item3 == 0 ? trip1 : trip2;
+
+                int previousLoc = 287;
+                int nextLoc = 287;
+                double diff = 0;
+
                 if (trip.Stops.Count == 0)
                     diff = 1800;
                 if (trip.Stops.Count > 0)
-                    previousLoc = OrderDict[trip.Stops[trip.Stops.Count - 1]].MatrixId;
+                    previousLoc = OrderDict[trip.Stops.Last.Value].MatrixId;
 
                 diff += DistanceMatrix[previousLoc, order.MatrixId];
                 diff += DistanceMatrix[order.MatrixId, nextLoc];
@@ -862,9 +868,9 @@ namespace groteOpdracht
                     diff = 1800;
 
                 if (location.Item4 > 0)
-                    previousLoc = OrderDict[trip.Stops[location.Item4 - 1]].MatrixId;
+                    previousLoc = OrderDict[trip.UnsortedStops[location.Item4 - 1].Value].MatrixId;
                 if(location.Item4 < trip.Stops.Count)
-                    nextLoc = OrderDict[trip.Stops[location.Item4]].MatrixId;
+                    nextLoc = OrderDict[trip.UnsortedStops[location.Item4].Value].MatrixId;
                 diff += DistanceMatrix[previousLoc, order.MatrixId];
                 diff += DistanceMatrix[order.MatrixId, nextLoc];
                 diff -= DistanceMatrix[previousLoc, nextLoc];
@@ -955,20 +961,15 @@ namespace groteOpdracht
                 var trip = location.Item3 == 0 ? trip1 : trip2;
                 double diff = 0;
 
-                int index = trip.Stops.FindIndex(x => x == orderId);
+                var node = trip.Stops.Find(orderId);
 
-                int previousLoc = 287;
-                int nextLoc = 287;
-                if (index == -1)
+                int previousLoc = node.Previous != null ? OrderDict[node.Previous.Value].MatrixId : 287;
+                int nextLoc = node.Next != null ? OrderDict[node.Next.Value].MatrixId : 287;
+                /*if (index == -1)
                 {
                     indexError = true;
                     return (0, false);
-                }
-                if (index != 0)
-                    previousLoc = OrderDict[trip.Stops[index - 1]].MatrixId;
-
-                if (index != trip.Stops.Count - 1)
-                    nextLoc = OrderDict[trip.Stops[index + 1]].MatrixId;
+                }*/
 
                 diff += DistanceMatrix[previousLoc, nextLoc];
                 diff -= DistanceMatrix[previousLoc, order.MatrixId];
@@ -1004,7 +1005,7 @@ namespace groteOpdracht
             {
                 var truck = location.Item1 == 0 ? Truck1 : Truck2;
 
-                int index = truck.Days[location.Item2, location.Item3].Stops.FindIndex(x => x == orderId);
+                int index = truck.Days[location.Item2, location.Item3].UnsortedStops.FindIndex(x => x.Value == orderId);
                 truck.Days[location.Item2, location.Item3].DeleteStop(index);
             }
 
@@ -1026,55 +1027,48 @@ namespace groteOpdracht
             var trip1 = truck.Days[location.Item2, 0];
             var trip2 = truck.Days[location.Item2, 1];
             var trip = location.Item3 == 0 ? trip1 : trip2;
+            var fromNode = trip.UnsortedStops[fromIndex];
 
             if (fromIndex == toIndex)
                 return (Value, false);
 
-            int previousLoc = 287;
-            int currentLoc = OrderDict[trip.Stops[fromIndex]].MatrixId;
-            int nextLoc = 287;
+
+            int previousLoc = fromNode.Previous != null ? OrderDict[fromNode.Previous.Value].MatrixId : 287;
+            int currentLoc = OrderDict[fromNode.Value].MatrixId;
+            int nextLoc = fromNode.Next != null ? OrderDict[fromNode.Next.Value].MatrixId : 287;
             bool valid = Valid;
             double diff = 0;
-
-            if (fromIndex > 0)
-                previousLoc = OrderDict[trip.Stops[fromIndex - 1]].MatrixId;
-
-            if (fromIndex < trip.Stops.Count - 1)
-                nextLoc = OrderDict[trip.Stops[fromIndex + 1]].MatrixId;
 
             diff -= DistanceMatrix[previousLoc, currentLoc];
             diff -= DistanceMatrix[currentLoc, nextLoc];
             diff += DistanceMatrix[previousLoc, nextLoc];
 
+            var toNode = trip.UnsortedStops[toIndex];
+
+
             previousLoc = 287;
             nextLoc = 287;
 
+            // TODO
+
             if (toIndex > 0)
             {
-                if( fromIndex - 1 == toIndex)
+                if (toIndex - 1 == fromIndex)
                 {
-                    previousLoc = OrderDict[trip.Stops[toIndex - 1]].MatrixId;
-                }
-                else if (toIndex - 1 == fromIndex)
-                {
-                    previousLoc = OrderDict[trip.Stops[toIndex]].MatrixId;
+                    previousLoc = OrderDict[toNode.Value].MatrixId;
                 }
                 else
-                    previousLoc = OrderDict[trip.Stops[toIndex - 1]].MatrixId;
+                    previousLoc = toNode.Previous != null ? OrderDict[toNode.Previous.Value].MatrixId : 287;
             }
 
             if (toIndex < trip.Stops.Count)
             {
-                if (fromIndex - 1 == toIndex)
+                if(toIndex - 1 == fromIndex)
                 {
-                    nextLoc = OrderDict[trip.Stops[toIndex]].MatrixId;
-                }
-                else if(toIndex - 1 == fromIndex)
-                {
-                    nextLoc = OrderDict[trip.Stops[toIndex + 1]].MatrixId;
+                    nextLoc = toNode.Next != null ? OrderDict[toNode.Next.Value].MatrixId : 287;
                 }
                 else
-                    nextLoc = OrderDict[trip.Stops[toIndex]].MatrixId;
+                    nextLoc = OrderDict[toNode.Value].MatrixId;
             }
 
             diff -= DistanceMatrix[previousLoc, nextLoc];
@@ -1100,11 +1094,11 @@ namespace groteOpdracht
             if (fromIndex == toIndex)
                 return;
             var truck = location.Item1 == 0 ? Truck1 : Truck2;
-            int orderId = truck.Days[location.Item2, location.Item3].Stops[fromIndex];
+            int orderId = truck.Days[location.Item2, location.Item3].UnsortedStops[fromIndex].Value;
             truck.Days[location.Item2, location.Item3].AddStop(orderId, toIndex);
 
-            if (fromIndex > toIndex)
-                fromIndex += 1;
+            /*if (fromIndex > toIndex)
+                fromIndex += 1;*/
 
             truck.Days[location.Item2, location.Item3].DeleteStop(fromIndex);
         }

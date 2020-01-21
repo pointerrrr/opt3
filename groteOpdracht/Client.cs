@@ -62,9 +62,11 @@ namespace groteOpdracht
                                 {
 
                                     var trip = ls.bestSolution.Truck1.Days[i, j];
+                                    var node = trip.Stops.First;
                                     for (int x = 0; x < trip.Stops.Count; x++)
                                     {
-                                        sendMessage(1 + ";" + (i + 1) + ";" + (counter++) + ";" + trip.Stops[x] + "\n");
+                                        sendMessage(1 + ";" + (i + 1) + ";" + (counter++) + ";" + node.Value + "\n");
+                                        node = node.Next;
                                     }
                                     sendMessage(1 + ";" + (i + 1) + ";" + (counter++) + ";" + 0 + "\n");
                                 }
@@ -72,9 +74,11 @@ namespace groteOpdracht
                                 for (int j = 0; j < 2; j++)
                                 {
                                     var trip = ls.bestSolution.Truck2.Days[i, j];
+                                    var node = trip.Stops.First;
                                     for (int x = 0; x < trip.Stops.Count; x++)
                                     {
-                                        sendMessage(2 + ";" + (i + 1) + ";" + (counter++) + ";" + trip.Stops[x] + "\n");
+                                        sendMessage(2 + ";" + (i + 1) + ";" + (counter++) + ";" + node.Value + "\n");
+                                        node = node.Next;
                                     }
                                     sendMessage(2 + ";" + (i + 1) + ";" + (counter++) + ";" + 0 + "\n");
 

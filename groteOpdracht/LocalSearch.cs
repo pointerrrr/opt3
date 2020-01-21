@@ -10,7 +10,7 @@ namespace groteOpdracht
     class LocalSearch
     {
         public static bool indexError = false;
-        public static bool DEBUG = false;
+        public static bool DEBUG = true;
         public static Dictionary<int, Order> OrderDict = new Dictionary<int, Order>();
         public static int[,] DistanceMatrix = new int[1099,1099];
         public Solution bestSolution, currentSolution;
@@ -157,7 +157,7 @@ namespace groteOpdracht
                     if (indexError)
                         currentSolution = currentSolution.Copy();
                     super++;
-                    
+                    break;
                 }
             }
         }
