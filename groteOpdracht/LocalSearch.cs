@@ -10,7 +10,7 @@ namespace groteOpdracht
     class LocalSearch
     {
         public static bool indexError = false;
-        public static bool DEBUG = true;
+        public static bool DEBUG = false;
         public static Dictionary<int, Order> OrderDict = new Dictionary<int, Order>();
         public static int[,] DistanceMatrix = new int[1099,1099];
         public Solution bestSolution, currentSolution;
@@ -35,6 +35,7 @@ namespace groteOpdracht
 
             //rng = new Random(65465494);
             rng = new Random(1);
+            return;
             testMatrix = new double[cities.Count,cities.Count];
             for(int x = 0; x < cities.Count; x++)
             {
@@ -72,7 +73,7 @@ namespace groteOpdracht
 
         public void iterate(ulong maxIterations = 50000000)
         {
-            _chances = new int[] { 1000, 100, 2000, 1000, 1000, 3000 , 70, 20, 10 };
+            _chances = new int[] { 1000, 100, 2000, 1000, 1000, 300 , 70, 20, 10 };
             //chances = new int[] { 1091, 1663, 862, 709, 4229, 3974, 4227, 1878, 2736, 2146, 4172 };
             //chances = new int[] { 4635, 4474, 3027, 1485, 3304, 2632, 3580, 2253, 3429, 2918, 4177 };
             ulong temperatureSteps = maxIterations / 350;
@@ -93,15 +94,15 @@ namespace groteOpdracht
             {
                 currentSolution = bestSolution.Copy();
                 if (currentSolution.Value < 350000)
-                    currentSolution.T = 15;
+                    currentSolution.T = 75;
                 else if (currentSolution.Value < 380000)
-                    currentSolution.T = 25;
+                    currentSolution.T = 125;
                 else if (currentSolution.Value < 400000)
-                    currentSolution.T = 30;
+                    currentSolution.T = 150;
                 else if (currentSolution.Value < 450000)
-                    currentSolution.T = 50;
+                    currentSolution.T = 250;
                 else
-                    currentSolution.T = 100;
+                    currentSolution.T = 500;
                 Console.WriteLine(bestSolution.Value);
                 
                 ulong lastImprovement = 0;
@@ -113,6 +114,8 @@ namespace groteOpdracht
                 }
                 while(lastImprovement < maxIterations)
                 {
+                    if (super == 7285)
+                        ;
                     if (counter % temperatureSteps == 0)
                         currentSolution.T *= 0.99d;
                     int randomChoice = rng.Next(chanceCount);
@@ -157,7 +160,9 @@ namespace groteOpdracht
                     if (indexError)
                         currentSolution = currentSolution.Copy();
                     super++;
-                    break;
+                    if (super % 100000000 == 0)
+                        Console.WriteLine(super);
+                    
                 }
             }
         }

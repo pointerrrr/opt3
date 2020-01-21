@@ -149,35 +149,36 @@ namespace groteOpdracht
                         break;
                     int fromIndex = rng.Next(max);
                     int toIndex = -1;
-                    if (rng.Next(4) == 0)
-                    {
-                        var tempOrder = OrderDict[curTruck.Days[daga, tripa].UnsortedStops[fromIndex].Value];
+                    //if (rng.Next(4) == 0)
+                    //{
+                    //    var tempOrder = OrderDict[curTruck.Days[daga, tripa].UnsortedStops[fromIndex].Value];
 
-                        for(int i = 0; i < max; i++)
-                        {
-                            if (tempOrder.MatrixId == OrderDict[curTruck.Days[daga, tripa].UnsortedStops[i].Value].MatrixId && i != fromIndex)
-                                toIndex = i;
-                        }
-                        if(toIndex == -1)
-                        {
-                            for (int i = 0; i < max; i++)
-                            {
-                                if (tempOrder.Plaats == OrderDict[curTruck.Days[daga, tripa].UnsortedStops[i].Value].Plaats && i != fromIndex)
-                                    toIndex = i;
-                            }
-                        }
-                        if (toIndex == -1)
-                            toIndex = rng.Next(max);
-                    }
-                    else
-                    {
+                    //    for(int i = 0; i < max; i++)
+                    //    {
+                    //        if (tempOrder.MatrixId == OrderDict[curTruck.Days[daga, tripa].UnsortedStops[i].Value].MatrixId && i != fromIndex)
+                    //            toIndex = i;
+                    //    }
+                    //    if(toIndex == -1)
+                    //    {
+                    //        for (int i = 0; i < max; i++)
+                    //        {
+                    //            if (tempOrder.Plaats == OrderDict[curTruck.Days[daga, tripa].UnsortedStops[i].Value].Plaats && i != fromIndex)
+                    //                toIndex = i;
+                    //        }
+                    //    }
+                    //    if (toIndex == -1)
+                    //        toIndex = rng.Next(max);
+                    //}
+                    //else
+                    //{
                         toIndex = rng.Next(max);
-                    }
-
-                    if(toIndex -1 == fromIndex)
+                    //}
+                    /*toIndex -1 == fromIndex*/
+                    if (curTruck.Days[daga, tripa].UnsortedStops[fromIndex].Next == curTruck.Days[daga, tripa].UnsortedStops[toIndex])
                     {
-                        toIndex--;
-                        fromIndex++;
+                        int temp = toIndex;
+                        toIndex = fromIndex;
+                        fromIndex = temp;
                     }
                     (newValue, valid) = CheckShiftOrder(location, fromIndex, toIndex);
 
@@ -856,8 +857,8 @@ namespace groteOpdracht
 
             foreach (var location in locations)
             {
-                int previousLoc = 287;
-                int nextLoc = 287;
+                int previousLoc;
+                int nextLoc;
                 double diff = 0;
 
                 var truck = location.Item1 == 0 ? Truck1 : Truck2;
@@ -865,12 +866,20 @@ namespace groteOpdracht
                 var trip2 = truck.Days[location.Item2, 1];
                 var trip = location.Item3 == 0 ? trip1 : trip2;
                 if (trip.Stops.Count == 0)
+                {
                     diff = 1800;
+                    previousLoc = 287;
+                    nextLoc = 287;
 
-                if (location.Item4 > 0)
-                    previousLoc = OrderDict[trip.UnsortedStops[location.Item4 - 1].Value].MatrixId;
-                if(location.Item4 < trip.Stops.Count)
-                    nextLoc = OrderDict[trip.UnsortedStops[location.Item4].Value].MatrixId;
+                }
+                else
+                {
+                    var node = trip.UnsortedStops[location.Item4];
+
+                    previousLoc = node.Previous != null ? OrderDict[node.Previous.Value].MatrixId : 287;
+                    nextLoc = OrderDict[node.Value].MatrixId;
+                }
+
                 diff += DistanceMatrix[previousLoc, order.MatrixId];
                 diff += DistanceMatrix[order.MatrixId, nextLoc];
                 diff -= DistanceMatrix[previousLoc, nextLoc];
@@ -1049,26 +1058,20 @@ namespace groteOpdracht
             previousLoc = 287;
             nextLoc = 287;
 
-            // TODO
+            // TODO curTruck.Days[daga, tripa].UnsortedStops[fromIndex].Next == curTruck.Days[daga, tripa].UnsortedStops[toIndex]
+            //previousLoc = toNode.Previous != null ? OrderDict[toNode.Previous.Value].MatrixId : 287;
+            //currentLoc = OrderDict[toNode.Value].MatrixId;
+            //nextLoc = toNode.Next != null ? OrderDict[toNode.Next.Value].MatrixId : 287;
 
-            if (toIndex > 0)
+            if (toNode.Previous == fromNode)
             {
-                if (toIndex - 1 == fromIndex)
-                {
-                    previousLoc = OrderDict[toNode.Value].MatrixId;
-                }
-                else
-                    previousLoc = toNode.Previous != null ? OrderDict[toNode.Previous.Value].MatrixId : 287;
+                previousLoc = OrderDict[toNode.Value].MatrixId;
+                nextLoc = toNode.Next != null ? OrderDict[toNode.Next.Value].MatrixId : 287;
             }
-
-            if (toIndex < trip.Stops.Count)
+            else
             {
-                if(toIndex - 1 == fromIndex)
-                {
-                    nextLoc = toNode.Next != null ? OrderDict[toNode.Next.Value].MatrixId : 287;
-                }
-                else
-                    nextLoc = OrderDict[toNode.Value].MatrixId;
+                previousLoc = toNode.Previous != null ? OrderDict[toNode.Previous.Value].MatrixId : 287;
+                nextLoc = OrderDict[toNode.Value].MatrixId;
             }
 
             diff -= DistanceMatrix[previousLoc, nextLoc];
