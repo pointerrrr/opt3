@@ -105,6 +105,34 @@ namespace groteOpdracht
             UnsortedStops.Add(node.Previous);
         }
 
+        public void AddStop(int orderId, LinkedListNode<int> node)
+        {
+            //if (index == Stops.Count)
+            //{
+            //    AddStop(orderId);
+            //    return;
+            //}
+
+            if (Stops.Count == 0)
+                Duration = 1800;
+            var order = OrderDict[orderId];
+
+            int previousLoc = node.Previous != null ? OrderDict[node.Previous.Value].MatrixId : 287;
+            int nextLoc = OrderDict[node.Value].MatrixId;
+
+
+            Duration += DistanceMatrix[previousLoc, order.MatrixId];
+            Duration += DistanceMatrix[order.MatrixId, nextLoc];
+            Duration -= DistanceMatrix[previousLoc, nextLoc];
+
+            Duration += order.LedigingsDuur;
+
+            Weight += order.Volume * order.AantalContainers;
+
+            Stops.AddBefore(node, orderId);
+
+            UnsortedStops.Add(node.Previous);
+        }
         /// <summary>
         /// Deletes the order at a specified index
         /// </summary>

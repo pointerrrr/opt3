@@ -10,8 +10,10 @@ namespace groteOpdracht
     class LocalSearch
     {
         public static bool indexError = false;
-        public static bool DEBUG = false;
+        public static bool DEBUG = true;
         public static Dictionary<int, Order> OrderDict = new Dictionary<int, Order>();
+        public static Dictionary<int, List<int>> PlaceDict = new Dictionary<int, List<int>>();
+        public static Dictionary<int, List<int>> MatrixDict = new Dictionary<int, List<int>>();
         public static int[,] DistanceMatrix = new int[1099,1099];
         public Solution bestSolution, currentSolution;
 
@@ -34,7 +36,7 @@ namespace groteOpdracht
                 return;
 
             //rng = new Random(65465494);
-            rng = new Random(1);
+            rng = new Random(10);
             return;
             testMatrix = new double[cities.Count,cities.Count];
             for(int x = 0; x < cities.Count; x++)
@@ -73,7 +75,7 @@ namespace groteOpdracht
 
         public void iterate(ulong maxIterations = 50000000)
         {
-            _chances = new int[] { 1000, 100, 2000, 1000, 1000, 300 , 70, 20, 10 };
+            _chances = new int[] { 1000, 100, 2000, 1000, 1000, 300, 70 };//, 20, 10 };
             //chances = new int[] { 1091, 1663, 862, 709, 4229, 3974, 4227, 1878, 2736, 2146, 4172 };
             //chances = new int[] { 4635, 4474, 3027, 1485, 3304, 2632, 3580, 2253, 3429, 2918, 4177 };
             ulong temperatureSteps = maxIterations / 350;
@@ -114,38 +116,50 @@ namespace groteOpdracht
                 }
                 while(lastImprovement < maxIterations)
                 {
-                    if (super == 7285)
+                    if (super == 160469)
                         ;
-                    if (counter % temperatureSteps == 0)
-                        currentSolution.T *= 0.99d;
-                    int randomChoice = rng.Next(chanceCount);
-                    // Add
-                    if (randomChoice <= cumSum[0])
-                        currentSolution.Mutate(0);
-                    // Remove
-                    else if (randomChoice <= cumSum[1])
-                        currentSolution.Mutate(1);
-                    // Shift order in trip
-                    else if (randomChoice <= cumSum[2])
-                        currentSolution.Mutate(2);
-                    // Shift order between trips
-                    else if (randomChoice <= cumSum[3])
-                        currentSolution.Mutate(3);
-                    // Shift order between trucks
-                    else if (randomChoice <= cumSum[4])
-                        currentSolution.Mutate(4);
-                    // 2-Opt
-                    else if (randomChoice <= cumSum[5])
-                        currentSolution.Mutate(5);
-                    // Add order after same place
-                    else if (randomChoice <= cumSum[6])
-                        currentSolution.Mutate(6);
-                    // Add order after same matrixId
-                    else if (randomChoice <= cumSum[7])
-                        currentSolution.Mutate(7);
-                    // Add order next to same matrixId, no matrixId found look for place name, no place found random add
-                    else
-                        currentSolution.Mutate(8);
+                    //try
+                    //{
+                        if (counter % temperatureSteps == 0)
+                            currentSolution.T *= 0.99d;
+                        int randomChoice = rng.Next(chanceCount);
+                        // Add
+                        if (randomChoice <= cumSum[0])
+                            currentSolution.Mutate(0);
+                        // Remove
+                        else if (randomChoice <= cumSum[1])
+                            currentSolution.Mutate(1);
+                        // Shift order in trip
+                        else if (randomChoice <= cumSum[2])
+                            currentSolution.Mutate(2);
+                        // Shift order between trips
+                        else if (randomChoice <= cumSum[3])
+                            currentSolution.Mutate(3);
+                        // Shift order between trucks
+                        else if (randomChoice <= cumSum[4])
+                            currentSolution.Mutate(4);
+                        // 2-Opt
+                        else if (randomChoice <= cumSum[5])
+                            currentSolution.Mutate(5);
+                        // Add order after same place
+                        else if (randomChoice <= cumSum[6])
+                            currentSolution.Mutate(6);
+                        // Add order after same matrixId
+                        else if (randomChoice <= cumSum[7])
+                            currentSolution.Mutate(7);
+                        // Add order next to same matrixId, no matrixId found look for place name, no place found random add
+                        else
+                            currentSolution.Mutate(8);
+                    //}
+                    //catch
+                    //{
+                    //    ;
+                    //}
+                    //foreach(var order in OrderDict)
+                    //{
+                    //    if (order.Value.Freq != order.Value.Locations.Count && order.Value.Locations.Count != 0)
+                    //        ;
+                    //}
 
                     if (currentSolution.Value < bestSolution.Value)
                     {
@@ -326,13 +340,22 @@ namespace groteOpdracht
                 var order = new Order();
                 string[] data = rij.Split(';');
                 order.Id = int.Parse(data[0]);
-                order.Plaats = data[1];
+                int plaats = cities.FindIndex(x => x == new string(data[1].Where(y => y != ' ').ToArray()));
+                order.Plaats = plaats;
                 order.Freq = int.Parse(data[2][0].ToString());
                 order.AantalContainers = int.Parse(data[3]);
                 order.Volume = int.Parse(data[4]);
                 order.LedigingsDuur = double.Parse(data[5]) * 60;
                 order.MatrixId = int.Parse(data[6]);
                 OrderDict.Add(order.Id, order);
+                if (!MatrixDict.ContainsKey(order.MatrixId))
+                    MatrixDict.Add(order.MatrixId, new List<int>());
+                MatrixDict[order.MatrixId].Add(order.Id);
+
+                if (!PlaceDict.ContainsKey(plaats))
+                    PlaceDict.Add(plaats, new List<int>());
+                PlaceDict[plaats].Add(order.Id);
+                  
             }
         }
 
@@ -386,6 +409,7 @@ namespace groteOpdracht
                 }
                 res.AddOrders(int.Parse(data[3]), new List<(int, int, int)> { (int.Parse(data[0]) -1, int.Parse(data[1]) - 1, trip)}, true);
             }
+            reader.Close();
             return res;
         }
 
