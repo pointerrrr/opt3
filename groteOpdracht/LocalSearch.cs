@@ -75,7 +75,7 @@ namespace groteOpdracht
 
         public void iterate(ulong maxIterations = 50000000)
         {
-            _chances = new int[] { 1000, 100, 2000, 1000, 1000, 300 };//, 70 };//, 20, 10 };
+            _chances = new int[] { 1000, 100, 2000, 1000, 1000, 300, 500, 200 , 150 };
             //chances = new int[] { 1091, 1663, 862, 709, 4229, 3974, 4227, 1878, 2736, 2146, 4172 };
             //chances = new int[] { 4635, 4474, 3027, 1485, 3304, 2632, 3580, 2253, 3429, 2918, 4177 };
             ulong temperatureSteps = maxIterations / 350;
@@ -116,7 +116,7 @@ namespace groteOpdracht
                 }
                 while(lastImprovement < maxIterations)
                 {
-                    if (super == 160469)
+                    if (super == 2925)
                         ;
                     //try
                     //{
@@ -153,13 +153,46 @@ namespace groteOpdracht
                     //}
                     //catch
                     //{
-                    //    ;
+                    //    Console.WriteLine(super);
+                    //    Console.ReadLine();
                     //}
-                    //foreach(var order in OrderDict)
+                    //foreach (var order in OrderDict)
                     //{
                     //    if (order.Value.Freq != order.Value.Locations.Count && order.Value.Locations.Count != 0)
                     //        ;
                     //}
+
+                    for (int x = 0; x < 2; x++)
+                    {
+                        var truck = x == 0 ? currentSolution.Truck1 : currentSolution.Truck2;
+                        foreach (var day in truck.Days)
+                        {
+                            foreach (var stop in day.UnsortedStops)
+                            {
+                                //if (stop.List == null)
+                                //{
+                                //    Console.WriteLine(super);
+                                //    Console.ReadLine();
+                                //}
+                                var ord = OrderDict[stop.Value];
+                                if (ord.Locations.Count != 0)
+                                {
+                                    foreach(var loc in ord.Locations)
+                                    {
+                                        if (ord.Id == 26836)
+                                            ;
+                                        if (ord.nodes[loc.Item2] == null)
+                                        {
+                                            Console.WriteLine(super);
+                                            //Console.ReadLine();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (OrderDict[26836].Locations.Count != 0 && OrderDict[26836].nodes[3] == null)
+                        ;
 
                     if (currentSolution.Value < bestSolution.Value)
                     {

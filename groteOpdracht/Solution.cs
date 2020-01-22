@@ -346,7 +346,7 @@ namespace groteOpdracht
 
                         var cities = PlaceDict[orderE.Plaats];
                         var randOrder = OrderDict[cities[rng.Next(cities.Count)]];
-                        if (randOrder.Locations.Count == 0)
+                        if (randOrder.Locations.Count == 0 || randOrder.Id == orderE.Id)
                             return;
 
                         bool same = false;
@@ -430,7 +430,7 @@ namespace groteOpdracht
                     var orderF = OrderDict.ElementAt(rng.Next(OrderDict.Count)).Value;
                     if (orderF.Locations.Count > 0)
                         break;
-                    var locationsF = new List<(int, int, int, int)>();
+                    var locationsF = new List<(int, int, int, LinkedListNode<int>)>();
                     var dagenF = new int[orderF.Freq];
 
                     switch (orderF.Freq)
@@ -454,44 +454,119 @@ namespace groteOpdracht
                     for (int i = 0; i < orderF.Freq; i++)
                     {
                         int dag = dagenF[i];
-                        int truck = -1;
-                        int trip = -1;
-                        int pos = -1;
-                        //check each truck
-                        for (int j = 0; j < 2; j++)
+
+                        var matrices = MatrixDict[orderF.MatrixId];
+                        bool same = false;
+                        int ind = -1;
+                        int truck = rng.Next(2);
+                        int trip = rng.Next(2);
+                        var curOrder = OrderDict[matrices[0]];
+                        for (int j = 0; j < matrices.Count; j++)
                         {
-                            //check each trip
-                            for (int x = 0; x < 2; x++)
+                            curOrder = OrderDict[matrices[j]];
+                            if (curOrder.Id == orderF.Id || curOrder.Locations.Count == 0)
+                                continue;
+
+                            for(int x = 0; x < curOrder.Freq; x++)
                             {
-                                // get current truck and current trip
-                                var curTruckF = j == 0 ? Truck1 : Truck2;
-                                var curTrip = curTruckF.Days[dag, x];
-                                for (int y = 0; y < curTrip.Stops.Count; y++)
+                                if(curOrder.Locations[x].Item2 == dag)
                                 {
-                                    if (OrderDict[curTrip.UnsortedStops[y].Value].MatrixId == orderF.MatrixId)
-                                    {
-                                        truck = j;
-                                        trip = x;
-                                        pos = y;
-                                        break;
-                                    }
-                                }
-                                if (truck != -1)
+                                    same = true;
+                                    ind = x;
+                                    truck = curOrder.Locations[x].Item1;
+                                    trip = curOrder.Locations[x].Item3;
                                     break;
+                                }
                             }
-                            if (truck != -1)
+
+                            if (same)
                                 break;
                         }
-                        if (truck == -1)
-                        {
-                            //Kiezen of niks doen. Of willekeurig toevoegen
-                            //return;
 
-                            truck = rng.Next(2);
-                            trip = rng.Next(2);
-                            pos = truck == 0 ? rng.Next(Truck1.Days[dag, trip].Stops.Count) : rng.Next(Truck2.Days[dag, trip].Stops.Count);
+                        if (same)
+                            locationsF.Add((truck, dag, trip, curOrder.nodes[dag]));
+                        else
+                        {
+                            var rTruck = truck == 0 ? Truck1 : Truck2;
+                            if (rTruck.Days[dag, trip].UnsortedStops.Count == 0)
+                                return;
+                            var randNode = rTruck.Days[dag, trip].UnsortedStops[rng.Next(rTruck.Days[dag, trip].UnsortedStops.Count)];
+                            locationsF.Add((truck, dag, trip, randNode));
                         }
-                        locationsF.Add((truck, dag, trip, pos));
+
+                        //var randOrder = OrderDict[matrices[rng.Next(matrices.Count)]];
+                        //if (randOrder.Locations.Count == 0)
+                        //    return;
+
+                        //bool same = false;
+                        //int ind = -1;
+                        //int truck = rng.Next(2);
+                        //int trip = rng.Next(2);
+                        //for (int j = 0; j < randOrder.Freq; j++)
+                        //{
+                        //    if (randOrder.Locations[j].Item2 == dag)
+                        //    {
+                        //        same = true;
+                        //        ind = j;
+                        //        truck = randOrder.Locations[j].Item1;
+                        //        trip = randOrder.Locations[j].Item3;
+                        //        break;
+                        //    }
+
+                        //}
+                        //if (same)
+                        //{
+                        //    locationsE.Add((truck, dag, trip, randOrder.nodes[dag]));
+                        //}
+                        //else
+                        //{
+                        //    var rTruck = truck == 0 ? Truck1 : Truck2;
+                        //    if (rTruck.Days[dag, trip].UnsortedStops.Count == 0)
+                        //        return;
+                        //    var randNode = rTruck.Days[dag, trip].UnsortedStops[rng.Next(rTruck.Days[dag, trip].UnsortedStops.Count)];
+                        //    locationsE.Add((truck, dag, trip, randNode));
+
+                        //}
+
+                        //int dag = dagenF[i];
+                        //int truck = -1;
+                        //int trip = -1;
+                        //int pos = -1;
+                        ////check each truck
+                        //for (int j = 0; j < 2; j++)
+                        //{
+                        //    //check each trip
+                        //    for (int x = 0; x < 2; x++)
+                        //    {
+                        //        // get current truck and current trip
+                        //        var curTruckF = j == 0 ? Truck1 : Truck2;
+                        //        var curTrip = curTruckF.Days[dag, x];
+                        //        for (int y = 0; y < curTrip.Stops.Count; y++)
+                        //        {
+                        //            if (OrderDict[curTrip.UnsortedStops[y].Value].MatrixId == orderF.MatrixId)
+                        //            {
+                        //                truck = j;
+                        //                trip = x;
+                        //                pos = y;
+                        //                break;
+                        //            }
+                        //        }
+                        //        if (truck != -1)
+                        //            break;
+                        //    }
+                        //    if (truck != -1)
+                        //        break;
+                        //}
+                        //if (truck == -1)
+                        //{
+                        //    //Kiezen of niks doen. Of willekeurig toevoegen
+                        //    //return;
+
+                        //    truck = rng.Next(2);
+                        //    trip = rng.Next(2);
+                        //    pos = truck == 0 ? rng.Next(Truck1.Days[dag, trip].Stops.Count) : rng.Next(Truck2.Days[dag, trip].Stops.Count);
+                        //}
+                        //locationsF.Add((truck, dag, trip, pos));
                     }
                     (newValue, valid) = CheckAddOrders(orderF.Id, locationsF);
                     if ((newValue < Value || rng.NextDouble() < AcceptationChance(Value, newValue, T)) && valid)
@@ -508,7 +583,7 @@ namespace groteOpdracht
                     var orderG = OrderDict.ElementAt(rng.Next(OrderDict.Count)).Value;
                     if (orderG.Locations.Count > 0)
                         break;
-                    var locationsG = new List<(int, int, int, int)>();
+                    var locationsG = new List<(int, int, int, LinkedListNode<int>)>();
                     var dagenG = new int[orderG.Freq];
 
                     switch (orderG.Freq)
@@ -533,76 +608,144 @@ namespace groteOpdracht
                     for (int i = 0; i < orderG.Freq; i++)
                     {
                         int dag = dagenG[i];
-                        int truck = -1;
-                        int trip = -1;
-                        int pos = -1;
-                        //check each truck
-                        for (int j = 0; j < 2; j++)
+
+                        var matrices = MatrixDict[orderG.MatrixId];
+                        bool same = false;
+                        int ind = -1;
+                        int truck = rng.Next(2);
+                        int trip = rng.Next(2);
+                        var curOrder = OrderDict[matrices[0]];
+                        for (int j = 0; j < matrices.Count; j++)
                         {
-                            //check each trip
-                            for (int x = 0; x < 2; x++)
+                            curOrder = OrderDict[matrices[j]];
+                            if (curOrder.Id == orderG.Id || curOrder.Locations.Count == 0)
+                                continue;
+
+                            for (int x = 0; x < curOrder.Freq; x++)
                             {
-                                // get current truck and current trip
-                                var curTruckG = j == 0 ? Truck1 : Truck2;
-                                var curTrip = curTruckG.Days[dag, x];
-                                for (int y = 0; y < curTrip.Stops.Count; y++)
+                                if (curOrder.Locations[x].Item2 == dag)
                                 {
-                                    if (OrderDict[curTrip.UnsortedStops[y].Value].MatrixId == orderG.MatrixId)
-                                    {
-                                        truck = j;
-                                        trip = x;
-                                        pos = y;
-                                        break;
-                                    }
-                                }
-                                if (truck != -1)
+                                    same = true;
+                                    ind = x;
+                                    truck = curOrder.Locations[x].Item1;
+                                    trip = curOrder.Locations[x].Item3;
                                     break;
+                                }
                             }
-                            if (truck != -1)
+
+                            if (same)
                                 break;
                         }
-                        //No matrixId found look for place
-                        if(truck == -1)
+
+                        if(!same)
                         {
+                           
 
-                            for (int j = 0; j < 2; j++)
-                            {
-                                //check each trip
-                                for (int x = 0; x < 2; x++)
-                                {
-                                    // get current truck and current trip
-                                    var curTruckG = j == 0 ? Truck1 : Truck2;
-                                    var curTrip = curTruckG.Days[dag, x];
-                                    for (int y = 0; y < curTrip.Stops.Count; y++)
-                                    {
-                                        if (OrderDict[curTrip.UnsortedStops[y].Value].Plaats == orderG.Plaats)
-                                        {
-                                            truck = j;
-                                            trip = x;
-                                            pos = y;
-                                            break;
-                                        }
-                                    }
-                                    if (truck != -1)
-                                        break;
-                                }
-                                if (truck != -1)
-                                    break;
-                            }
+                            var cities = PlaceDict[orderG.Plaats];
+                            curOrder = OrderDict[cities[rng.Next(cities.Count)]];
+                            if (curOrder.Locations.Count == 0 || curOrder.Id == orderG.Id)
+                                return;
 
-                        }
-
-                        //No place found random add
-                        if (truck == -1)
-                        {
-                            //Kiezen of niks doen. Of willekeurig toevoegen
-                            //return;
-
+                           
+                            ind = -1;
                             truck = rng.Next(2);
                             trip = rng.Next(2);
-                            pos = truck == 0 ? rng.Next(Truck1.Days[dag, trip].Stops.Count) : rng.Next(Truck2.Days[dag, trip].Stops.Count);
+                            for (int j = 0; j < curOrder.Freq; j++)
+                            {
+                                if (curOrder.Locations[j].Item2 == dag)
+                                {
+                                    same = true;
+                                    ind = j;
+                                    truck = curOrder.Locations[j].Item1;
+                                    trip = curOrder.Locations[j].Item3;
+                                    break;
+                                }
+
+                            }
                         }
-                        locationsG.Add((truck, dag, trip, pos));
+                        if (same)
+                            locationsG.Add((truck, dag, trip, curOrder.nodes[dag]));
+                        else
+                        {
+                            var rTruck = truck == 0 ? Truck1 : Truck2;
+                            if (rTruck.Days[dag, trip].UnsortedStops.Count == 0)
+                                return;
+                            var randNode = rTruck.Days[dag, trip].UnsortedStops[rng.Next(rTruck.Days[dag, trip].UnsortedStops.Count)];
+                            locationsG.Add((truck, dag, trip, randNode));
+                        }
+
+
+                        //int dag = dagenG[i];
+                        //int truck = -1;
+                        //int trip = -1;
+                        //int pos = -1;
+                        ////check each truck
+                        //for (int j = 0; j < 2; j++)
+                        //{
+                        //    //check each trip
+                        //    for (int x = 0; x < 2; x++)
+                        //    {
+                        //        // get current truck and current trip
+                        //        var curTruckG = j == 0 ? Truck1 : Truck2;
+                        //        var curTrip = curTruckG.Days[dag, x];
+                        //        for (int y = 0; y < curTrip.Stops.Count; y++)
+                        //        {
+                        //            if (OrderDict[curTrip.UnsortedStops[y].Value].MatrixId == orderG.MatrixId)
+                        //            {
+                        //                truck = j;
+                        //                trip = x;
+                        //                pos = y;
+                        //                break;
+                        //            }
+                        //        }
+                        //        if (truck != -1)
+                        //            break;
+                        //    }
+                        //    if (truck != -1)
+                        //        break;
+                        //}
+                        ////No matrixId found look for place
+                        //if(truck == -1)
+                        //{
+
+                        //    for (int j = 0; j < 2; j++)
+                        //    {
+                        //        //check each trip
+                        //        for (int x = 0; x < 2; x++)
+                        //        {
+                        //            // get current truck and current trip
+                        //            var curTruckG = j == 0 ? Truck1 : Truck2;
+                        //            var curTrip = curTruckG.Days[dag, x];
+                        //            for (int y = 0; y < curTrip.Stops.Count; y++)
+                        //            {
+                        //                if (OrderDict[curTrip.UnsortedStops[y].Value].Plaats == orderG.Plaats)
+                        //                {
+                        //                    truck = j;
+                        //                    trip = x;
+                        //                    pos = y;
+                        //                    break;
+                        //                }
+                        //            }
+                        //            if (truck != -1)
+                        //                break;
+                        //        }
+                        //        if (truck != -1)
+                        //            break;
+                        //    }
+
+                        //}
+
+                        ////No place found random add
+                        //if (truck == -1)
+                        //{
+                        //    //Kiezen of niks doen. Of willekeurig toevoegen
+                        //    //return;
+
+                        //    truck = rng.Next(2);
+                        //    trip = rng.Next(2);
+                        //    pos = truck == 0 ? rng.Next(Truck1.Days[dag, trip].Stops.Count) : rng.Next(Truck2.Days[dag, trip].Stops.Count);
+                        //}
+                        //locationsG.Add((truck, dag, trip, pos));
                     }
                     (newValue, valid) = CheckAddOrders(orderG.Id, locationsG);
                     if ((newValue < Value || rng.NextDouble() < AcceptationChance(Value, newValue, T)) && valid)
@@ -776,8 +919,7 @@ namespace groteOpdracht
             //throw new NotImplementedException();
             double finalValue = Value;
             bool valid = Valid;
-            double diffRem = 0;
-            double diffAdd = 0;
+            
 
             var removeTruck = locations[0].Item1 == 0 ? Truck1 : Truck2;
             var trip1rem = removeTruck.Days[locations[0].Item2, 0];
@@ -788,6 +930,9 @@ namespace groteOpdracht
             var trip1Add = addTruck.Days[locations[1].Item2, 0];
             var trip2Add = addTruck.Days[locations[1].Item2, 1];
             var addTrip = addTruck.Days[locations[1].Item2, locations[1].Item3];
+
+            double diffRem = removeTrip.Duration;
+            double diffAdd = addTrip.Duration;
 
             if (addTrip.Stops.Count < 2 || removeTrip.Stops.Count < 2)
                 return (0, false);
@@ -827,8 +972,10 @@ namespace groteOpdracht
                 if (addTrip.Stops.Count == 0)
                     diffAdd += 1800;
             }
-            finalValue += diffRem + diffAdd;
-            if (trip1Add.Duration + trip2Add.Duration + diffAdd >= 12 * 60 * 60 || trip1rem.Duration + trip2rem.Duration + diffRem >= 12d * 60 * 60 ||
+            finalValue += diffRem + diffAdd - removeTrip.Duration - addTrip.Duration;
+            diffRem += locations[0].Item3 == 0 ? removeTruck.Days[locations[0].Item2, 1].Duration : removeTruck.Days[locations[0].Item2, 0].Duration;
+            diffAdd += locations[1].Item3 == 0 ? addTruck.Days[locations[1].Item2, 1].Duration : addTruck.Days[locations[1].Item2, 0].Duration;
+            if (diffAdd >= 12 * 60 * 60 || diffRem >= 12d * 60 * 60 ||
                 addTrip.Weight + order.AantalContainers * order.Volume > 100000 || removeTrip.Weight - order.AantalContainers * order.Volume > 100000)
                 valid = false;
             return (finalValue, valid);
@@ -869,7 +1016,10 @@ namespace groteOpdracht
         {
             indexError = false;
             foreach (var location in OrderDict.Values)
+            {
                 location.Locations = new List<(int, int, int)>();
+                location.nodes = new LinkedListNode<int>[5];
+            }
             var res = new Solution();
             res.Penalty = Penalty;
             res.Truck1 = Truck1.Copy(0);
@@ -903,24 +1053,26 @@ namespace groteOpdracht
 
                 int previousLoc = 287;
                 int nextLoc = 287;
-                double diff = 0;
+                double newTime = trip.Duration;
 
                 if (trip.Stops.Count == 0)
-                    diff = 1800;
+                    newTime += 1800;
                 if (trip.Stops.Count > 0)
                     previousLoc = OrderDict[trip.Stops.Last.Value].MatrixId;
 
-                diff += DistanceMatrix[previousLoc, order.MatrixId];
-                diff += DistanceMatrix[order.MatrixId, nextLoc];
-                diff -= DistanceMatrix[previousLoc, nextLoc];
+                newTime += DistanceMatrix[previousLoc, order.MatrixId];
+                newTime += DistanceMatrix[order.MatrixId, nextLoc];
+                newTime -= DistanceMatrix[previousLoc, nextLoc];
 
-                diff += order.LedigingsDuur;
-
-                if (trip1.Duration + trip2.Duration + diff >= 12 * 60 * 60 || trip.Weight + order.AantalContainers * order.Volume > 100000)
+                newTime += order.LedigingsDuur;
+                finalValue += newTime - trip.Duration;
+                newTime += location.Item3 == 1 ? trip1.Duration : trip2.Duration;
+                double temp = trip1.Duration + trip2.Duration + newTime;
+                if (newTime >= 12d * 60 * 60 || trip.Weight + order.AantalContainers * order.Volume > 100000)
                 {
                     valid = false;
                 }
-                finalValue += diff;
+                
             }
 
             return (finalValue, valid);
