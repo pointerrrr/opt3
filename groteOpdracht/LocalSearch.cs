@@ -10,7 +10,7 @@ namespace groteOpdracht
     class LocalSearch
     {
         public static bool indexError = false;
-        public static bool DEBUG = true;
+        public static bool DEBUG = false;
         public static Dictionary<int, Order> OrderDict = new Dictionary<int, Order>();
         public static Dictionary<int, List<int>> PlaceDict = new Dictionary<int, List<int>>();
         public static Dictionary<int, List<int>> MatrixDict = new Dictionary<int, List<int>>();
@@ -116,8 +116,8 @@ namespace groteOpdracht
                 }
                 while(lastImprovement < maxIterations)
                 {
-                    if (super == 2925)
-                        ;
+                    //if (super == 2925)
+                    //    ;
                     //try
                     //{
                         if (counter % temperatureSteps == 0)
@@ -162,37 +162,37 @@ namespace groteOpdracht
                     //        ;
                     //}
 
-                    for (int x = 0; x < 2; x++)
-                    {
-                        var truck = x == 0 ? currentSolution.Truck1 : currentSolution.Truck2;
-                        foreach (var day in truck.Days)
-                        {
-                            foreach (var stop in day.UnsortedStops)
-                            {
-                                //if (stop.List == null)
-                                //{
-                                //    Console.WriteLine(super);
-                                //    Console.ReadLine();
-                                //}
-                                var ord = OrderDict[stop.Value];
-                                if (ord.Locations.Count != 0)
-                                {
-                                    foreach(var loc in ord.Locations)
-                                    {
-                                        if (ord.Id == 26836)
-                                            ;
-                                        if (ord.nodes[loc.Item2] == null)
-                                        {
-                                            Console.WriteLine(super);
-                                            //Console.ReadLine();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (OrderDict[26836].Locations.Count != 0 && OrderDict[26836].nodes[3] == null)
-                        ;
+                    //for (int x = 0; x < 2; x++)
+                    //{
+                    //    var truck = x == 0 ? currentSolution.Truck1 : currentSolution.Truck2;
+                    //    foreach (var day in truck.Days)
+                    //    {
+                    //        foreach (var stop in day.UnsortedStops)
+                    //        {
+                    //            //if (stop.List == null)
+                    //            //{
+                    //            //    Console.WriteLine(super);
+                    //            //    Console.ReadLine();
+                    //            //}
+                    //            var ord = OrderDict[stop.Value];
+                    //            if (ord.Locations.Count != 0)
+                    //            {
+                    //                foreach(var loc in ord.Locations)
+                    //                {
+                    //                    if (ord.Id == 26836)
+                    //                        ;
+                    //                    if (ord.nodes[loc.Item2] == null)
+                    //                    {
+                    //                        Console.WriteLine(super);
+                    //                        //Console.ReadLine();
+                    //                    }
+                    //                }
+                    //            }
+                    //        }
+                    //    }
+                    //}
+                    //if (OrderDict[26836].Locations.Count != 0 && OrderDict[26836].nodes[3] == null)
+                    //    ;
 
                     if (currentSolution.Value < bestSolution.Value)
                     {

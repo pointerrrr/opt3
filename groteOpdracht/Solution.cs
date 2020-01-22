@@ -1018,7 +1018,7 @@ namespace groteOpdracht
             foreach (var location in OrderDict.Values)
             {
                 location.Locations = new List<(int, int, int)>();
-                location.nodes = new LinkedListNode<int>[5];
+                //location.nodes = new LinkedListNode<int>[5];
             }
             var res = new Solution();
             res.Penalty = Penalty;
