@@ -75,7 +75,7 @@ namespace groteOpdracht
 
         public void iterate(ulong maxIterations = 50000000)
         {
-            _chances = new int[] { 1000, 100, 2000, 1000, 1000, 300, 70 };//, 20, 10 };
+            _chances = new int[] { 1000, 100, 2000, 1000, 1000, 300 };//, 70 };//, 20, 10 };
             //chances = new int[] { 1091, 1663, 862, 709, 4229, 3974, 4227, 1878, 2736, 2146, 4172 };
             //chances = new int[] { 4635, 4474, 3027, 1485, 3304, 2632, 3580, 2253, 3429, 2918, 4177 };
             ulong temperatureSteps = maxIterations / 350;
